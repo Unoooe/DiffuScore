@@ -70,10 +70,10 @@ Then open http://localhost:5000 in your browser
 ├── start.bat           # Windows startup script
 ├── README.md           # Project documentation
 ├── static/
-│   └── style.css       # Stylesheet
+│   └── css/
+│       └── style.css   # Stylesheet
 ├── templates/
 │   └── index.html      # Frontend page
-└── uploads/            # Temporary upload directory
 ```
 
 ## Usage

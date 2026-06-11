@@ -21,31 +21,29 @@
                             <polyline points="8,10 12,6 16,10"/>
                             <line x1="12" y1="6" x2="12" y2="14"/>
                         </svg>
-                        <p class="upload-text">Drag & drop or click to upload</p>
+                        <p class="upload-text">Drag & drop to upload</p>
                         <p class="upload-hint"></p>
                         <button class="remove-multi-btn" onclick="removeMulti('reference')">×</button>
                     </div>
                     <div class="preview-area" id="referencePreview" style="display: none;">
-                        <button class="remove-btn" onclick="removeImage('reference')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"/>
-                                <line x1="6" y1="6" x2="18" y2="18"/>
-                            </svg>
-                        </button>
                         <div class="preview-wrapper">
                             <img id="referenceImg" alt="Generated Image">
+                            <div class="preview-overlay">
+                                <button class="remove-btn" onclick="removeImage('reference')" aria-label="Remove image">
+                                    <span class="remove-symbol">─</span>
+                                </button>
+                            </div>
                         </div>
                         <p class="filename" id="referenceFilename" data-label="Gen:"><span class="filename-label">Gen:</span></p>
                     </div>
                     <div class="preview-area multi-preview" id="referenceMultiPreview" style="display: none;">
-                        <button class="remove-btn" onclick="removeMulti('reference')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"/>
-                                <line x1="6" y1="6" x2="18" y2="18"/>
-                            </svg>
-                        </button>
                         <div class="preview-wrapper">
                             <div class="multi-stack" id="referenceThumbnails"></div>
+                            <div class="preview-overlay">
+                                <button class="remove-btn" onclick="removeMulti('reference')" aria-label="Remove images">
+                                    <span class="remove-symbol">─</span>
+                                </button>
+                            </div>
                         </div>
                         <p class="filename" id="referenceMultiFilename"><span class="filename-label">Gen:</span></p>
                     </div>
@@ -58,31 +56,29 @@
                             <polyline points="8,10 12,6 16,10"/>
                             <line x1="12" y1="6" x2="12" y2="14"/>
                         </svg>
-                        <p class="upload-text">Drag & drop or click to upload</p>
+                        <p class="upload-text">Drag & drop to upload</p>
                         <p class="upload-hint"></p>
                         <button class="remove-multi-btn" onclick="removeMulti('generated')">×</button>
                     </div>
                     <div class="preview-area" id="generatedPreview" style="display: none;">
-                        <button class="remove-btn" onclick="removeImage('generated')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"/>
-                                <line x1="6" y1="6" x2="18" y2="18"/>
-                            </svg>
-                        </button>
                         <div class="preview-wrapper">
                             <img id="generatedImg" alt="Target Image">
+                            <div class="preview-overlay">
+                                <button class="remove-btn" onclick="removeImage('generated')" aria-label="Remove image">
+                                    <span class="remove-symbol">─</span>
+                                </button>
+                            </div>
                         </div>
                         <p class="filename" id="generatedFilename" data-label="Ref:"><span class="filename-label">Ref:</span></p>
                     </div>
                     <div class="preview-area multi-preview" id="generatedMultiPreview" style="display: none;">
-                        <button class="remove-btn" onclick="removeMulti('generated')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="6" x2="6" y2="18"/>
-                                <line x1="6" y1="6" x2="18" y2="18"/>
-                            </svg>
-                        </button>
                         <div class="preview-wrapper">
                             <div class="multi-stack" id="generatedThumbnails"></div>
+                            <div class="preview-overlay">
+                                <button class="remove-btn" onclick="removeMulti('generated')" aria-label="Remove images">
+                                    <span class="remove-symbol">─</span>
+                                </button>
+                            </div>
                         </div>
                         <p class="filename" id="generatedMultiFilename"><span class="filename-label">Ref:</span></p>
                     </div>
@@ -163,20 +159,46 @@
         let referenceImageName = '';
         let generatedImageName = '';
 
+        function truncateToFixedLength(fullText) {
+            return fullText.length > 5 ? fullText.substring(0, 5) + '...' : fullText;
+        }
+
+        // Extract folder name from webkitRelativePath or custom _folderName property, and truncate if needed
+        function extractFolderName(files) {
+            if (!files || files.length === 0) return '';
+
+            const firstFile = files[0];
+            console.log('extractFolderName - firstFile._folderName:', firstFile._folderName);
+            console.log('extractFolderName - firstFile.webkitRelativePath:', firstFile.webkitRelativePath);
+            
+            // Try custom _folderName property (set when dragging folder)
+            if (firstFile._folderName) {
+                const folderName = firstFile._folderName;
+                console.log('extractFolderName - using _folderName:', folderName);
+                return folderName.length > 5 ? folderName.substring(0, 5) + '...' : folderName;
+            }
+
+            // Try to get folder name from webkitRelativePath (drag & drop folder)
+            if (firstFile.webkitRelativePath) {
+                const parts = firstFile.webkitRelativePath.split('/');
+                console.log('extractFolderName - parts:', parts);
+                if (parts.length > 1) {
+                    const folderName = parts[0];
+                    console.log('extractFolderName - using webkitRelativePath:', folderName);
+                    return folderName.length > 5 ? folderName.substring(0, 5) + '...' : folderName;
+                }
+            }
+
+            // Fallback: return empty string if no folder detected
+            console.log('extractFolderName - no folder detected');
+            return '';
+        }
+
         function setupDropZone(panelId, uploadId, type) {
             const panel = document.getElementById(panelId);
             const uploadArea = document.getElementById(uploadId);
 
             console.log('Setting up drop zone for:', type);
-
-            // Create file input dynamically
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.multiple = true;
-            input.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 5;';
-            uploadArea.appendChild(input);
-            console.log('Input created for:', type);
 
             // Prevent default drag behaviors on panel
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -209,6 +231,7 @@
 
                 // Collect all files including from folders
                 const allFiles = [];
+                let folderName = '';
 
                 if (items) {
                     for (let i = 0; i < items.length; i++) {
@@ -220,6 +243,9 @@
                                     const file = item.getAsFile();
                                     if (file) allFiles.push(file);
                                 } else if (entry.isDirectory) {
+                                    // Save folder name for later use
+                                    folderName = entry.name;
+                                    console.log('Detected folder:', folderName);
                                     // It's a directory - read all files from it
                                     const dirFiles = await readEntriesRecursive(entry);
                                     allFiles.push(...dirFiles);
@@ -242,27 +268,12 @@
 
                 console.log('Total files collected:', allFiles.length);
                 if (allFiles.length > 0) {
+                    // Store folder name in a custom property on the first file
+                    if (folderName && allFiles[0]) {
+                        allFiles[0]._folderName = folderName;
+                        console.log('Attached _folderName to first file:', folderName);
+                    }
                     handleFiles(allFiles, type);
-                }
-            }, false);
-
-            // Click to upload
-            panel.addEventListener('click', (e) => {
-                console.log('Panel clicked for:', type, 'target:', e.target.tagName);
-                if (e.target.closest('.remove-btn') || e.target.closest('button')) {
-                    console.log('Ignoring click on button');
-                    return;
-                }
-                console.log('Triggering file input click for:', type);
-                input.click();
-            }, false);
-
-            // Handle file input change
-            input.addEventListener('change', (e) => {
-                console.log('Input change for:', type, 'files:', e.target.files.length);
-                if (e.target.files.length > 0) {
-                    handleFiles(e.target.files, type);
-                    e.target.value = '';
                 }
             }, false);
         }
@@ -273,7 +284,7 @@
             const imgId = type + 'Img';
             const filenameId = type + 'Filename';
             const label = type === 'reference' ? 'Gen: ' : 'Ref: ';
-            const truncatedName = filename.substring(0, 3) + '...';
+            const truncatedName = truncateToFixedLength(filename);
 
             document.getElementById(uploadId).style.display = 'none';
             document.getElementById(previewId).style.display = 'flex';
@@ -295,7 +306,7 @@
             const previewId = type + 'Preview';
 
             const uploadArea = document.getElementById(uploadId);
-            uploadArea.querySelector('.upload-text').textContent = 'Drag & drop or click to upload';
+            uploadArea.querySelector('.upload-text').textContent = 'Drag & drop to upload';
             uploadArea.querySelector('.upload-hint').textContent = '';
             uploadArea.classList.remove('has-files');
             uploadArea.style.display = 'flex';
@@ -327,7 +338,7 @@
             event.stopPropagation();
             const uploadId = type + 'Upload';
             const uploadArea = document.getElementById(uploadId);
-            uploadArea.querySelector('.upload-text').textContent = 'Drag & drop or click to upload';
+            uploadArea.querySelector('.upload-text').textContent = 'Drag & drop to upload';
             uploadArea.querySelector('.upload-hint').textContent = '';
             uploadArea.classList.remove('has-files');
             uploadArea.style.display = 'flex';
@@ -389,7 +400,7 @@
             document.getElementById('msssimValue').textContent = '-';
             document.getElementById('psnrValue').textContent = '-';
             document.getElementById('lpipsValue').textContent = '-';
-            const existingList = document.querySelector('.multi-results-list');
+            const existingList = document.querySelector('.multi-results-wrapper');
             if (existingList) existingList.remove();
 
             // Multi mode
@@ -529,11 +540,11 @@
                         <div class="report-images">
                             <div class="report-image-box">
                                 <div class="report-image-grid" id="reportRefGrid"></div>
-                                <div class="report-image-label">${refFiles.length > 1 ? 'Gen: ' + refFiles.length + ' Ld' : referenceImageName}</div>
+                                <div class="report-image-label">${refFiles.length > 1 ? 'Gen: ' + (extractFolderName(refFiles) ? extractFolderName(refFiles) + ' ' : '') + refFiles.length + ' Ld' : referenceImageName}</div>
                             </div>
                             <div class="report-image-box">
                                 <div class="report-image-grid" id="reportDistGrid"></div>
-                                <div class="report-image-label">${distFiles.length > 1 ? 'Ref: ' + distFiles.length + ' Ld' : generatedImageName}</div>
+                                <div class="report-image-label">${distFiles.length > 1 ? 'Ref: ' + (extractFolderName(distFiles) ? extractFolderName(distFiles) + ' ' : '') + distFiles.length + ' Ld' : generatedImageName}</div>
                             </div>
                         </div>
                         <div class="report-metrics">
@@ -570,6 +581,26 @@
 
                     const refGrid = reportDiv.querySelector('#reportRefGrid');
                     const distGrid = reportDiv.querySelector('#reportDistGrid');
+
+                    // Adjust labels to use adaptive truncation for single-image reports
+                    const refLabelEl = reportDiv.querySelector('.report-image-box:nth-child(1) .report-image-label');
+                    const distLabelEl = reportDiv.querySelector('.report-image-box:nth-child(2) .report-image-label');
+                    if (refLabelEl) {
+                        if (refFiles.length > 1) {
+                            const folderName = extractFolderName(refFiles);
+                            refLabelEl.textContent = 'Gen: ' + (folderName ? folderName + ' ' : '') + refFiles.length + ' Ld';
+                        } else if (referenceImageName) {
+                            refLabelEl.textContent = 'Gen: ' + truncateToFixedLength(referenceImageName);
+                        }
+                    }
+                    if (distLabelEl) {
+                        if (distFiles.length > 1) {
+                            const folderName = extractFolderName(distFiles);
+                            distLabelEl.textContent = 'Ref: ' + (folderName ? folderName + ' ' : '') + distFiles.length + ' Ld';
+                        } else if (generatedImageName) {
+                            distLabelEl.textContent = 'Ref: ' + truncateToFixedLength(generatedImageName);
+                        }
+                    }
 
                     async function buildReportGrid(container, files) {
                         if (!files || files.length === 0) return;
@@ -615,13 +646,6 @@
                     link1.download = `Quality_Report_Summary_${dateStr}.png`;
                     link1.href = canvas1;
                     link1.click();
-
-                    // Detailed version (with detailed results)
-                    const canvas2 = await generateReport(true);
-                    const link2 = document.createElement('a');
-                    link2.download = `Quality_Report_Detailed_${dateStr}.png`;
-                    link2.href = canvas2;
-                    link2.click();
 
                     // Data table (CSV)
                     const csvContent = generateCSV();
@@ -723,17 +747,16 @@
         function handleSingleImage(file, type) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                const truncatedName = file.name.substring(0, 3) + '...';
                 if (type === 'reference') {
                     referenceImage = e.target.result;
                     referenceFiles = [];
                     refHasBatch = false;
-                    referenceImageName = 'Gen:' + truncatedName;
+                    referenceImageName = file.name;
                 } else {
                     generatedImage = e.target.result;
                     generatedFiles = [];
                     disHasBatch = false;
-                    generatedImageName = 'Ref:' + truncatedName;
+                    generatedImageName = file.name;
                 }
                 // Hide multi preview, show single preview
                 document.getElementById(type + 'MultiPreview').style.display = 'none';
@@ -794,10 +817,13 @@
             const multiFilename = document.getElementById(type + 'MultiFilename');
             
             const label = type === 'reference' ? 'Gen: ' : 'Ref: ';
-            multiFilename.innerHTML = `<span class="filename-label">${label}</span>${imageFiles.length} Ld`;
+            const folderName = extractFolderName(imageFiles);
+            const displayText = folderName ? `${folderName} ${imageFiles.length}Ld` : `${imageFiles.length}Ld`;
+            multiFilename.innerHTML = `<span class="filename-label">${label}</span>${displayText}`;
             multiFilename.title = imageFiles.slice(0, 3).map(f => f.name).join(', ') + (imageFiles.length > 3 ? ', ...' : '');
             
             thumbnails.innerHTML = '';
+            const remaining = Math.max(0, imageFiles.length - 1);
             
             // Get first image aspect ratio
             const firstReader = new FileReader();
@@ -852,40 +878,129 @@
             });
         }
 
+        const PAGE_SIZE = 5;
+        let allMultiResults = [];
+        let currentPage = 1;
+
         function displayMultiResults(results) {
-            if (results.length === 0) {
-                return;
-            }
+            if (results.length === 0) return;
+
+            allMultiResults = results;
+            currentPage = 1;
 
             const avgMsssim = results.reduce((a, r) => a + r.metrics.msssim, 0) / results.length;
             const avgPsnr = results.reduce((a, r) => a + r.metrics.psnr, 0) / results.length;
             const avgLpips = results.reduce((a, r) => a + r.metrics.lpips, 0) / results.length;
 
-            // Display at single image metric position
             document.getElementById('msssimValue').textContent = avgMsssim.toFixed(4);
             document.getElementById('psnrValue').textContent = avgPsnr >= 100 ? '∞' : avgPsnr.toFixed(2) + ' dB';
             document.getElementById('lpipsValue').textContent = avgLpips.toFixed(4);
 
-            // Display each comparison result
-            let resultsHtml = '<div class="multi-results-list">';
-            results.forEach((r, index) => {
-                resultsHtml += `
+            const evalMetrics = document.querySelector('.eval-metrics');
+            const existing = document.querySelector('.multi-results-wrapper');
+            if (existing) existing.remove();
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'multi-results-wrapper';
+            evalMetrics.insertAdjacentElement('afterend', wrapper);
+
+            renderResultsPage(1);
+        }
+
+        function renderResultsPage(page) {
+            currentPage = page;
+            const total = allMultiResults.length;
+            const totalPages = Math.ceil(total / PAGE_SIZE);
+            const start = (page - 1) * PAGE_SIZE;
+            const end = Math.min(start + PAGE_SIZE, total);
+            const pageResults = allMultiResults.slice(start, end);
+
+            const wrapper = document.querySelector('.multi-results-wrapper');
+
+            const truncate = s => s.length > 10 ? s.slice(0, 10) + '…' : s;
+
+            // Items list
+            let itemsHtml = '<div class="multi-results-list">';
+            pageResults.forEach((r, i) => {
+                const globalIndex = start + i + 1;
+                const displayName = r.name.split(' vs ').map(truncate).join(' vs ');
+                itemsHtml += `
                     <div class="multi-result-item">
-                        <span class="multi-result-index">${index + 1}</span>
-                        <span class="multi-result-name">${r.name}</span>
+                        <span class="multi-result-index">${globalIndex}</span>
+                        <span class="multi-result-name">${displayName}</span>
                         <span class="multi-result-metric">MS-SSIM: ${r.metrics.msssim.toFixed(4)}</span>
                         <span class="multi-result-metric">PSNR: ${r.metrics.psnr >= 100 ? '∞' : r.metrics.psnr.toFixed(2)}</span>
                         <span class="multi-result-metric">LPIPS: ${r.metrics.lpips.toFixed(4)}</span>
-                    </div>
-                `;
+                    </div>`;
             });
-            resultsHtml += '</div>';
+            itemsHtml += '</div>';
 
-            // Add below metrics section
-            const evalMetrics = document.querySelector('.eval-metrics');
-            const existingList = evalMetrics.querySelector('.multi-results-list');
-            if (existingList) existingList.remove();
-            evalMetrics.insertAdjacentHTML('afterend', resultsHtml);
+            // Page numbers with ellipsis
+            function buildPageNumbers(cur, tot) {
+                if (tot <= 10) {
+                    return Array.from({length: tot}, (_, i) => i + 1);
+                }
+                const pages = [];
+                if (cur <= 5) {
+                    for (let i = 1; i <= Math.min(7, tot - 1); i++) pages.push(i);
+                    pages.push('…');
+                    pages.push(tot);
+                } else if (cur >= tot - 4) {
+                    pages.push(1);
+                    pages.push('…');
+                    for (let i = Math.max(tot - 6, 2); i <= tot; i++) pages.push(i);
+                } else {
+                    pages.push(1);
+                    pages.push('…');
+                    for (let i = cur - 1; i <= cur + 1; i++) pages.push(i);
+                    pages.push('…');
+                    pages.push(tot);
+                }
+                return pages;
+            }
+
+            const pageNums = buildPageNumbers(page, totalPages);
+            const pageNumsHtml = pageNums.map(p => {
+                if (p === '…') return `<span class="page-ellipsis">…</span>`;
+                return `<button class="page-num-btn${p === page ? ' active' : ''}" data-page="${p}">${p}</button>`;
+            }).join('');
+
+            const paginationHtml = `
+                <div class="pagination-controls">
+                    <div class="pagination-nav">
+                        <button class="page-nav-btn prev-btn" data-page="${page - 1}"${page === 1 ? ' disabled' : ''}>Prev</button>
+                        <span class="page-numbers">${pageNumsHtml}</span>
+                        <button class="page-nav-btn next-btn" data-page="${page + 1}"${page === totalPages ? ' disabled' : ''}>Next</button>
+                    </div>
+                    <div class="pagination-goto">
+                        Page:
+                        <input class="goto-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${page}">
+                        <button class="goto-btn">Go</button>
+                    </div>
+                </div>`;
+
+            wrapper.innerHTML = itemsHtml + `<div class="multi-results-pagination">${paginationHtml}</div>`;
+
+            // Bind page buttons
+            wrapper.querySelectorAll('[data-page]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const p = parseInt(btn.dataset.page);
+                    if (!isNaN(p) && p >= 1 && p <= totalPages) renderResultsPage(p);
+                });
+            });
+
+            // Bind goto
+            const gotoInput = wrapper.querySelector('.goto-input');
+            const gotoBtn = wrapper.querySelector('.goto-btn');
+            gotoInput.addEventListener('focus', () => gotoInput.select());
+            function doGoto() {
+                const p = parseInt(gotoInput.value);
+                if (!isNaN(p) && p >= 1 && p <= totalPages) {
+                    renderResultsPage(p);
+                }
+            }
+            gotoBtn.addEventListener('click', doGoto);
+            gotoInput.addEventListener('keydown', e => { if (e.key === 'Enter') doGoto(); });
         }
 
         // Helper functions

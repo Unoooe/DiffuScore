@@ -113,41 +113,60 @@ main {
     margin: 0 auto 1rem;
 }
 
-.preview-wrapper img {
+.preview-wrapper img,
+.preview-wrapper .multi-stack {
     width: 100%;
-    height: 100%;
+    height: auto;
     max-width: 100%;
-    max-height: 100%;
+    max-height: 280px;
     object-fit: contain;
     display: block;
     border-radius: 10px;
 }
 
-.remove-btn {
+.preview-wrapper .preview-overlay {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 32px;
-    height: 32px;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    pointer-events: none;
     border-radius: 10px;
-    border: none;
-    background: #333;
-    color: white;
+}
+
+.preview-wrapper:hover .preview-overlay {
+    opacity: 1;
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.remove-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(60, 60, 67, 0.16);
+    background: rgba(255, 255, 255, 0.92);
+    color: rgba(51, 51, 51, 0.92);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transform-origin: center center;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .remove-btn:hover {
-    background: #000;
-    transform: scale(1.05);
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-.remove-btn svg {
-    width: 14px;
-    height: 14px;
+.remove-symbol {
+    font-size: 1.2rem;
+    line-height: 1;
+    font-weight: 600;
 }
 
 .remove-multi-btn {
@@ -180,14 +199,13 @@ main {
     font-size: clamp(0.9rem, 2.5vw, 1.35rem);
     color: #9a9393;
     text-align: center;
-    max-width: 100%;
+    width: 100%;
+    max-width: 280px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
+    display: block;
+    margin: 0 auto;
 }
 
 .filename-label {
@@ -453,10 +471,10 @@ main {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.4rem 0.6rem;
+    padding: 0.4rem 2rem;
     background: #f5f5f5;
     border-radius: 10px;
-    font-size: 0.8rem;
+    font-size: 1.125rem;
 }
 
 .multi-result-index {
@@ -477,6 +495,133 @@ main {
 .multi-result-metric {
     color: #333;
     font-weight: 500;
+    padding-left: 0.8rem;
+}
+
+.multi-results-wrapper {
+    margin-top: 1rem;
+}
+
+.multi-results-pagination {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+}
+
+.pagination-info {
+    font-size: 0.78rem;
+    color: #999;
+}
+
+.pagination-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.page-nav-btn {
+    padding: 0.25rem 0.65rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #555;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.page-nav-btn:hover:not(:disabled) {
+    background: #f0f0f0;
+}
+
+.page-nav-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-wrap: wrap;
+}
+
+.page-num-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #555;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.page-num-btn:hover {
+    background: #f0f0f0;
+}
+
+.page-num-btn.active {
+    background: #333;
+    color: #fff;
+    border-color: #333;
+}
+
+.page-ellipsis {
+    color: #aaa;
+    font-size: 0.78rem;
+    padding: 0 0.15rem;
+}
+
+.pagination-goto {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: #888;
+}
+
+.goto-input {
+    width: 48px;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    text-align: center;
+    outline: none;
+}
+
+.goto-input:focus {
+    border-color: #aaa;
+}
+
+.goto-btn {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #555;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.goto-btn:hover {
+    background: #f0f0f0;
 }
 
 
